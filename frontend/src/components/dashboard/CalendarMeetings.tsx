@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Users, Plus } from 'lucide-react';
+import { useTodayMeetings } from '@/hooks/useMeetings';
 
 const CalendarMeetings = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const { meetings, loading, error } = useTodayMeetings();
   
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -57,29 +59,7 @@ const CalendarMeetings = () => {
     );
   };
 
-  const meetings = [
-    {
-      id: 1,
-      title: 'Meeting with client about project',
-      time: '10:00 AM',
-      duration: '1h',
-      participants: ['S', 'M']
-    },
-    {
-      id: 2,
-      title: 'Meeting with client about project',
-      time: '2:00 PM',
-      duration: '30m',
-      participants: ['A', 'E']
-    },
-    {
-      id: 3,
-      title: 'Meeting with client about project',
-      time: '4:00 PM',
-      duration: '45m',
-      participants: ['D', 'L', 'T']
-    }
-  ];
+
 
   return (
     <motion.div
@@ -182,38 +162,38 @@ const CalendarMeetings = () => {
 
         {/* Simple Meetings List */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="text-xs text-foreground">Meeting with client</p>
-              <p className="text-xs text-muted-foreground">Marketing</p>
+          {loading ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-foreground">10:00</p>
-              <p className="text-xs text-muted-foreground">AM</p>
+          ) : error ? (
+            <div className="text-center py-4">
+              <p className="text-xs text-red-500">Error loading meetings</p>
             </div>
-          </div>
-          
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="text-xs text-foreground">Meeting with client</p>
-              <p className="text-xs text-muted-foreground">Marketing</p>
+          ) : meetings.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-xs text-muted-foreground">No meetings scheduled</p>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-foreground">10:30</p>
-              <p className="text-xs text-muted-foreground">AM</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="text-xs text-foreground">Meeting with client</p>
-              <p className="text-xs text-muted-foreground">Marketing</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-foreground">10:30</p>
-              <p className="text-xs text-muted-foreground">AM</p>
-            </div>
-          </div>
+          ) : (
+            meetings.slice(0, 3).map((meeting, index) => (
+              <div key={meeting._id} className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-xs text-foreground">{meeting.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {meeting.project?.name || meeting.meetingType}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-foreground">
+                    {meeting.startTime}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {parseInt(meeting.startTime.split(':')[0]) >= 12 ? 'PM' : 'AM'}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
       

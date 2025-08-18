@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useRouter, usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
   CheckSquare, 
@@ -18,17 +19,19 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', active: true },
-  { icon: CheckSquare, label: 'Task', active: false },
-  { icon: Calendar, label: 'Calendar', active: false },
-  { icon: Clock, label: 'Reminder', active: false },
-  { icon: TrendingUp, label: 'Progress Project', active: false },
-  { icon: MessageSquare, label: 'Messages', active: false },
-  { icon: Settings, label: 'Settings', active: false },
-  { icon: LogOut, label: 'Sign Out', active: false },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { icon: CheckSquare, label: 'Task', path: '/tasks' },
+  { icon: Calendar, label: 'Calendar', path: '/calendar' },
+  { icon: Clock, label: 'Reminder', path: '/reminders' },
+  { icon: TrendingUp, label: 'Progress Project', path: '/projects' },
+  { icon: MessageSquare, label: 'Messages', path: '/messages' },
+  { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: LogOut, label: 'Sign Out', path: '/logout' },
 ];
 
 const Sidebar = ({ isOpen }: SidebarProps) => {
+  const router = useRouter();
+  const pathname = usePathname();
   return (
     <motion.aside 
       initial={{ x: isOpen ? 0 : -300 }}
@@ -52,16 +55,19 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
         <nav className="flex-1 space-y-2">
           {menuItems.map((item, index) => {
             const IconComponent = item.icon;
+            const isActive = pathname === item.path;
+            
             return (
               <motion.div
                 key={item.label}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
+                onClick={() => router.push(item.path)}
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer
                   transition-all duration-200 hover:bg-accent
-                  ${item.active 
+                  ${isActive 
                     ? 'bg-primary text-primary-foreground shadow-lg' 
                     : 'text-muted-foreground hover:text-foreground'
                   }

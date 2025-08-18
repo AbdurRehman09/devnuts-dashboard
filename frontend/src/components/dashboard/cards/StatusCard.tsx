@@ -8,6 +8,7 @@ interface StatusCardProps {
   type: 'completed' | 'inprogress' | 'closed' | 'new';
   count: number;
   index: number;
+  loading?: boolean;
 }
 
 const cardConfig = {
@@ -41,7 +42,7 @@ const cardConfig = {
   }
 };
 
-const StatusCard = ({ type, count, index }: StatusCardProps) => {
+const StatusCard = ({ type, count, index, loading = false }: StatusCardProps) => {
   const config = cardConfig[type];
   const IconComponent = config.icon;
 
@@ -56,6 +57,7 @@ const StatusCard = ({ type, count, index }: StatusCardProps) => {
         bg-gradient-to-br ${config.bgGradient}
         shadow-md hover:shadow-lg transition-all duration-300
         flex flex-col justify-between
+        ${loading ? 'animate-pulse' : ''}
       `}
     >
       {/* Background Pattern */}

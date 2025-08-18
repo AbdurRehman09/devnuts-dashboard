@@ -2,16 +2,47 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Target, TrendingUp } from 'lucide-react';
-
-const goalsData = [
-  { name: 'Option 1', value: 60, color: '#10b981' },
-  { name: 'Option 2', value: 25, color: '#f59e0b' },
-  { name: 'Option 3', value: 15, color: '#6366f1' }
-];
+import { Target, TrendingUp, Plus } from 'lucide-react';
+import { useGoals } from '@/hooks/useGoals';
 
 const Goals = () => {
-  const totalGoals = goalsData.reduce((sum, item) => sum + item.value, 0);
+  const { goals, loading, error } = useGoals({ limit: 6, status: 'active' });
+
+  // Transform goals data for visualization
+  const goalsData = goals.slice(0, 6).map((goal) => ({
+    name: goal.title,
+    value: goal.progress,
+    color: goal.color,
+    status: goal.status,
+    priority: goal.priority,
+    unit: goal.unit
+  }));
+
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.8 }}
+        className="bg-card rounded-xl p-4 border border-border shadow-lg h-fit min-h-[300px] flex items-center justify-center"
+      >
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </motion.div>
+    );
+  }
+
+  if (error) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.8 }}
+        className="bg-card rounded-xl p-4 border border-border shadow-lg h-fit min-h-[300px] flex items-center justify-center"
+      >
+        <p className="text-red-500">Error loading goals</p>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
