@@ -100,5 +100,42 @@ export const useTodayMeetings = () => {
     fetchTodayMeetings();
   }, []);
 
-  return { meetings, loading, error, refetch: fetchTodayMeetings };
+  const createMeeting = async (meetingData: any) => {
+    try {
+      const newMeeting = await meetingService.createMeeting(meetingData);
+      setMeetings(prev => [newMeeting, ...prev]);
+      return newMeeting;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const updateMeeting = async (id: string, meetingData: any) => {
+    try {
+      const updatedMeeting = await meetingService.updateMeeting(id, meetingData);
+      setMeetings(prev => prev.map(meeting => meeting._id === id ? updatedMeeting : meeting));
+      return updatedMeeting;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const deleteMeeting = async (id: string) => {
+    try {
+      await meetingService.deleteMeeting(id);
+      setMeetings(prev => prev.filter(meeting => meeting._id !== id));
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  return { 
+    meetings, 
+    loading, 
+    error, 
+    refetch: fetchTodayMeetings,
+    createMeeting,
+    updateMeeting,
+    deleteMeeting
+  };
 };

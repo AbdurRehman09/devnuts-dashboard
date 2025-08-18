@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Bell, Clock, CheckCircle, MoreHorizontal, Plus } from 'lucide-react';
 import { useUpcomingReminders } from '@/hooks/useReminders';
 import { Reminder } from '@/services/reminderService';
+import ReminderModal from '../modals/ReminderModal';
 
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -29,8 +30,49 @@ const getStatusColor = (status: string) => {
 };
 
 const Reminders = () => {
-  const { reminders, loading, error } = useUpcomingReminders();
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const { 
+    reminders, 
+    loading, 
+    error, 
+    createReminder, 
+    updateReminder, 
+    deleteReminder 
+  } = useUpcomingReminders();
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+
+  const handleCreateReminder = () => {
+    setSelectedReminder(null);
+    setModalMode('create');
+    setShowReminderModal(true);
+  };
+
+  const handleEditReminder = (reminder: Reminder) => {
+    setSelectedReminder(reminder);
+    setModalMode('edit');
+    setShowReminderModal(true);
+  };
+
+  const handleDeleteReminder = async (reminderId: string) => {
+    try {
+      await deleteReminder(reminderId);
+    } catch (error) {
+      console.error('Error deleting reminder:', error);
+    }
+  };
+
+  const handleSaveReminder = async (reminderData: any) => {
+    try {
+      if (modalMode === 'create') {
+        await createReminder(reminderData);
+      } else if (selectedReminder) {
+        await updateReminder(selectedReminder._id, reminderData);
+      }
+    } catch (error) {
+      console.error('Error saving reminder:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -79,7 +121,7 @@ const Reminders = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setShowCreateModal(true)}
+            onClick={handleCreateReminder}
             className="px-3 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1"
           >
             <Plus className="w-4 h-4" />
@@ -88,6 +130,7 @@ const Reminders = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => window.location.href = '/reminders'}
             className="text-primary text-sm font-medium hover:underline"
           >
             View All
@@ -100,13 +143,12 @@ const Reminders = () => {
         <div className="col-span-4">Name</div>
         <div className="col-span-3">Date</div>
         <div className="col-span-2">Status</div>
-        <div className="col-span-2">Action</div>
-        <div className="col-span-1"></div>
+        <div className="col-span-3">Action</div>
       </div>
 
       {/* Reminders List */}
       <div className="space-y-3">
-        {reminders.slice(0, 4).map((reminder: Reminder, index: number) => {
+        {reminders.slice(0, 3).map((reminder: Reminder, index: number) => {
           const StatusIcon = getStatusIcon(reminder.status);
           const reminderDate = new Date(reminder.reminderDate);
           const isToday = reminderDate.toDateString() === new Date().toDateString();
@@ -153,26 +195,22 @@ const Reminders = () => {
               </div>
 
               {/* Action */}
-              <div className="col-span-2">
+              <div className="col-span-3">
                 <div className="flex items-center gap-2">
-                  <button className="text-xs text-primary hover:underline">
+                  <button 
+                    onClick={() => handleEditReminder(reminder)}
+                    className="text-xs text-blue-500 hover:underline"
+                  >
                     Edit
                   </button>
-                  <button className="text-xs text-red-500 hover:underline">
+                  <span className="text-xs text-muted-foreground">|</span>
+                  <button 
+                    onClick={() => handleDeleteReminder(reminder._id)}
+                    className="text-xs text-red-500 hover:underline"
+                  >
                     Delete
                   </button>
                 </div>
-              </div>
-
-              {/* More */}
-              <div className="col-span-1">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-1 rounded-lg hover:bg-accent transition-colors"
-                >
-                  <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-                </motion.button>
               </div>
             </motion.div>
           );
@@ -187,7 +225,7 @@ const Reminders = () => {
             <p className="text-sm">Create your first reminder to get started</p>
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={handleCreateReminder}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             Create Reminder
@@ -212,6 +250,16 @@ const Reminders = () => {
 
       {/* Extra spacing to align with CalendarMeetings */}
       <div className="h-16"></div>
+
+      {/* Reminder Modal */}
+      <ReminderModal
+        isOpen={showReminderModal}
+        onClose={() => setShowReminderModal(false)}
+        reminder={selectedReminder}
+        onSave={handleSaveReminder}
+        onDelete={handleDeleteReminder}
+        mode={modalMode}
+      />
     </motion.div>
   );
 };

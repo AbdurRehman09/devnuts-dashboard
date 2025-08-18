@@ -41,11 +41,12 @@ const goalSchema = new mongoose.Schema({
   },
   startDate: {
     type: Date,
-    required: true
+    required: false,
+    default: Date.now
   },
   targetDate: {
     type: Date,
-    required: true
+    required: false
   },
   completedDate: {
     type: Date

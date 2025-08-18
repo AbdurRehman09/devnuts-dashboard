@@ -51,9 +51,13 @@ const getTask = async (req, res) => {
 // Create new task
 const createTask = async (req, res) => {
   try {
+    // Debug log
+    console.log('Creating task with data:', req.body);
+    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 

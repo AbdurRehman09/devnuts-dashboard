@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { MoreHorizontal, Users, Plus } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { Task } from '@/services/taskService';
+import TaskModal from '../modals/TaskModal';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -42,7 +43,41 @@ const getInitials = (name: string) => {
 
 const TaskList = () => {
   const { tasks, loading, error, createTask, updateTask, deleteTask } = useTasks({ limit: 10 });
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+
+  const handleCreateTask = () => {
+    setSelectedTask(null);
+    setModalMode('create');
+    setShowTaskModal(true);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task);
+    setModalMode('edit');
+    setShowTaskModal(true);
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask(taskId);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleSaveTask = async (taskData: any) => {
+    try {
+      if (modalMode === 'create') {
+        await createTask(taskData);
+      } else if (selectedTask) {
+        await updateTask(selectedTask._id, taskData);
+      }
+    } catch (error) {
+      console.error('Error saving task:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -88,7 +123,7 @@ const TaskList = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setShowCreateModal(true)}
+            onClick={handleCreateTask}
             className="px-3 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1"
           >
             <Plus className="w-4 h-4" />
@@ -97,6 +132,7 @@ const TaskList = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => window.location.href = '/tasks'}
             className="text-primary text-sm font-medium hover:underline"
           >
             View All
@@ -105,27 +141,27 @@ const TaskList = () => {
       </div>
 
       {/* Table Header */}
-      <div className="grid grid-cols-12 gap-4 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4 pb-3">
-        <div className="col-span-4">Task name</div>
+      <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4 pb-3">
+        <div className="col-span-3">Task name</div>
         <div className="col-span-3">Assign by</div>
         <div className="col-span-2">Status</div>
         <div className="col-span-2">Date</div>
-        <div className="col-span-1">Action</div>
+        <div className="col-span-2">Action</div>
       </div>
 
       {/* Task Items */}
       <div className="space-y-4">
-        {tasks.map((task: Task, index: number) => (
+        {tasks.slice(0, 3).map((task: Task, index: number) => (
           <motion.div
             key={task._id}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 + 0.8 }}
-            className="grid grid-cols-12 gap-4 items-center py-3 hover:bg-accent/50 rounded-lg px-2 transition-colors"
+            className="grid grid-cols-12 gap-2 items-center py-3 hover:bg-accent/50 rounded-lg px-2 transition-colors"
           >
             {/* Task Name */}
-            <div className="col-span-4">
-              <div className="font-medium text-foreground mb-1">{task.title}</div>
+            <div className="col-span-3">
+              <div className="font-medium text-foreground mb-1 text-sm truncate">{task.title}</div>
               <div className="w-full bg-muted rounded-full h-2">
                 <motion.div
                   initial={{ width: 0 }}
@@ -140,14 +176,14 @@ const TaskList = () => {
             {/* Assigned By */}
             <div className="col-span-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-medium text-primary">
                     {getInitials(task.assignedBy)}
                   </span>
                 </div>
-                <div>
-                  <div className="text-sm font-medium text-foreground">{task.assignedBy}</div>
-                  <div className="text-xs text-muted-foreground">To: {task.assignedTo}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-foreground truncate">{task.assignedBy}</div>
+                  <div className="text-xs text-muted-foreground truncate">To: {task.assignedTo}</div>
                 </div>
               </div>
             </div>
@@ -177,13 +213,19 @@ const TaskList = () => {
             </div>
 
             {/* Action */}
-            <div className="col-span-1">
+            <div className="col-span-2">
               <div className="flex items-center gap-1">
-                <button className="text-xs text-blue-500 hover:underline">
+                <button 
+                  onClick={() => handleEditTask(task)}
+                  className="text-xs text-blue-500 hover:underline"
+                >
                   Edit
                 </button>
                 <span className="text-xs text-muted-foreground">|</span>
-                <button className="text-xs text-red-500 hover:underline">
+                <button 
+                  onClick={() => handleDeleteTask(task._id)}
+                  className="text-xs text-red-500 hover:underline"
+                >
                   Delete
                 </button>
               </div>
@@ -200,7 +242,7 @@ const TaskList = () => {
             <p className="text-sm">Create your first task to get started</p>
           </div>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={handleCreateTask}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             Create Task
@@ -220,6 +262,16 @@ const TaskList = () => {
           <span className="text-xs text-muted-foreground">On Track</span>
         </div>
       </div>
+
+      {/* Task Modal */}
+      <TaskModal
+        isOpen={showTaskModal}
+        onClose={() => setShowTaskModal(false)}
+        task={selectedTask}
+        onSave={handleSaveTask}
+        onDelete={handleDeleteTask}
+        mode={modalMode}
+      />
     </motion.div>
   );
 };

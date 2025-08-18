@@ -83,22 +83,59 @@ export const useUpcomingReminders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUpcomingReminders = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await reminderService.getUpcomingReminders();
-        setReminders(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch upcoming reminders');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchUpcomingReminders = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await reminderService.getUpcomingReminders();
+      setReminders(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch upcoming reminders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUpcomingReminders();
   }, []);
 
-  return { reminders, loading, error };
+  const createReminder = async (reminderData: any) => {
+    try {
+      const newReminder = await reminderService.createReminder(reminderData);
+      setReminders(prev => [newReminder, ...prev]);
+      return newReminder;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const updateReminder = async (id: string, reminderData: any) => {
+    try {
+      const updatedReminder = await reminderService.updateReminder(id, reminderData);
+      setReminders(prev => prev.map(reminder => reminder._id === id ? updatedReminder : reminder));
+      return updatedReminder;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const deleteReminder = async (id: string) => {
+    try {
+      await reminderService.deleteReminder(id);
+      setReminders(prev => prev.filter(reminder => reminder._id !== id));
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  return { 
+    reminders, 
+    loading, 
+    error, 
+    refetch: fetchUpcomingReminders,
+    createReminder,
+    updateReminder,
+    deleteReminder
+  };
 };

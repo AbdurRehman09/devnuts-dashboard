@@ -8,7 +8,8 @@ import {
   CheckSquare, 
   Calendar, 
   Clock, 
-  TrendingUp, 
+  TrendingUp,
+  Target, // For Goals
   MessageSquare, 
   Settings, 
   LogOut 
@@ -24,6 +25,7 @@ const menuItems = [
   { icon: Calendar, label: 'Calendar', path: '/calendar' },
   { icon: Clock, label: 'Reminder', path: '/reminders' },
   { icon: TrendingUp, label: 'Progress Project', path: '/projects' },
+  { icon: Target, label: 'Goals', path: '/goals' },
   { icon: MessageSquare, label: 'Messages', path: '/messages' },
   { icon: Settings, label: 'Settings', path: '/settings' },
   { icon: LogOut, label: 'Sign Out', path: '/logout' },

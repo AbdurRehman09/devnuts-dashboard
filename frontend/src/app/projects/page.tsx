@@ -6,12 +6,48 @@ import { useProjects } from '@/hooks/useProjects';
 import { Plus, Search, TrendingUp, Users, Calendar, AlertCircle } from 'lucide-react';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Header from '@/components/dashboard/Header';
+import ProjectModal from '@/components/dashboard/modals/ProjectModal';
 
 const ProjectsPage = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const { projects, loading, error, createProject, updateProject, deleteProject } = useProjects();
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+
+  const handleCreateProject = () => {
+    setSelectedProject(null);
+    setModalMode('create');
+    setShowProjectModal(true);
+  };
+
+  const handleEditProject = (project: any) => {
+    setSelectedProject(project);
+    setModalMode('edit');
+    setShowProjectModal(true);
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      await deleteProject(projectId);
+    } catch (error) {
+      console.error('Error deleting project:', error);
+    }
+  };
+
+  const handleSaveProject = async (projectData: any) => {
+    try {
+      if (modalMode === 'create') {
+        await createProject(projectData);
+      } else if (selectedProject) {
+        await updateProject(selectedProject._id, projectData);
+      }
+    } catch (error) {
+      console.error('Error saving project:', error);
+    }
+  };
 
   const filteredProjects = projects.filter(project => {
     const matchesFilter = filter === 'all' || project.status === filter;
@@ -37,24 +73,6 @@ const ProjectsPage = () => {
       case 'low': return 'text-green-500';
       default: return 'text-gray-500';
     }
-  };
-
-  const handleCreateProject = () => {
-    const newProject = {
-      name: 'New Project',
-      description: 'Project description',
-      status: 'planning',
-      progress: 0,
-      priority: 'medium',
-      startDate: new Date().toISOString().split('T')[0],
-      projectManager: 'You',
-      teamMembers: [],
-      milestones: []
-    };
-    
-    createProject(newProject).then(() => {
-      console.log('Project created');
-    }).catch(console.error);
   };
 
   return (
@@ -223,13 +241,22 @@ const ProjectsPage = () => {
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          <button className="text-sm text-blue-500 hover:underline">
+                          <button 
+                            onClick={() => handleEditProject(project)}
+                            className="text-sm text-blue-500 hover:underline"
+                          >
                             Edit
                           </button>
-                          <button className="text-sm text-green-500 hover:underline">
+                          <button 
+                            onClick={() => handleEditProject(project)}
+                            className="text-sm text-green-500 hover:underline"
+                          >
                             View Details
                           </button>
-                          <button className="text-sm text-red-500 hover:underline">
+                          <button 
+                            onClick={() => handleDeleteProject(project._id)}
+                            className="text-sm text-red-500 hover:underline"
+                          >
                             Archive
                           </button>
                         </div>
@@ -250,6 +277,16 @@ const ProjectsPage = () => {
           </main>
         </div>
       </div>
+
+      {/* Project Modal */}
+      <ProjectModal
+        isOpen={showProjectModal}
+        onClose={() => setShowProjectModal(false)}
+        project={selectedProject}
+        onSave={handleSaveProject}
+        onDelete={handleDeleteProject}
+        mode={modalMode}
+      />
     </div>
   );
 };

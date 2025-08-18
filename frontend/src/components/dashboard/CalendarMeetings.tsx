@@ -4,10 +4,50 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Users, Plus } from 'lucide-react';
 import { useTodayMeetings } from '@/hooks/useMeetings';
+import MeetingModal from './modals/MeetingModal';
 
 const CalendarMeetings = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const { meetings, loading, error } = useTodayMeetings();
+  const { meetings, loading, error, createMeeting, updateMeeting, deleteMeeting } = useTodayMeetings();
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+
+  const handleScheduleMeeting = () => {
+    setSelectedMeeting(null);
+    setModalMode('create');
+    setShowMeetingModal(true);
+  };
+
+  const handleEditMeeting = (meeting: any) => {
+    setSelectedMeeting(meeting);
+    setModalMode('edit');
+    setShowMeetingModal(true);
+  };
+
+  const handleDeleteMeeting = async (meetingId: string) => {
+    try {
+      await deleteMeeting(meetingId);
+    } catch (error) {
+      console.error('Error deleting meeting:', error);
+    }
+  };
+
+  const handleSaveMeeting = async (meetingData: any) => {
+    try {
+      console.log('Dashboard: Saving meeting with data:', meetingData);
+      if (modalMode === 'create') {
+        await createMeeting(meetingData);
+        console.log('Dashboard: Meeting created successfully');
+      } else if (selectedMeeting) {
+        await updateMeeting(selectedMeeting._id, meetingData);
+        console.log('Dashboard: Meeting updated successfully');
+      }
+      setShowMeetingModal(false);
+    } catch (error) {
+      console.error('Dashboard: Error saving meeting:', error);
+    }
+  };
   
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -157,7 +197,12 @@ const CalendarMeetings = () => {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-sm font-medium text-foreground">Today Meetings</h4>
-          <span className="text-xs text-primary cursor-pointer">+ Meeting</span>
+          <span 
+            onClick={handleScheduleMeeting}
+            className="text-xs text-primary cursor-pointer hover:underline"
+          >
+            + Meeting
+          </span>
         </div>
 
         {/* Simple Meetings List */}
@@ -176,7 +221,11 @@ const CalendarMeetings = () => {
             </div>
           ) : (
             meetings.slice(0, 3).map((meeting, index) => (
-              <div key={meeting._id} className="flex items-center justify-between py-2">
+              <div 
+                key={meeting._id} 
+                className="flex items-center justify-between py-2 hover:bg-accent/50 rounded px-2 -mx-2 cursor-pointer"
+                onClick={() => handleEditMeeting(meeting)}
+              >
                 <div>
                   <p className="text-xs text-foreground">{meeting.title}</p>
                   <p className="text-xs text-muted-foreground">
@@ -199,6 +248,16 @@ const CalendarMeetings = () => {
       
       {/* Extra spacing to align with Reminders */}
       <div className="h-4"></div>
+
+      {/* Meeting Modal */}
+      <MeetingModal
+        isOpen={showMeetingModal}
+        onClose={() => setShowMeetingModal(false)}
+        meeting={selectedMeeting}
+        onSave={handleSaveMeeting}
+        onDelete={handleDeleteMeeting}
+        mode={modalMode}
+      />
     </motion.div>
   );
 };

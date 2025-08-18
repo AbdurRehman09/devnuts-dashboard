@@ -9,19 +9,8 @@ const {
   deleteGoal,
   getGoalStats
 } = require('../controllers/goalController');
+const { goalValidation } = require('../middleware/validation');
 const { body } = require('express-validator');
-
-// Goal validation
-const goalValidation = [
-  body('title').trim().isLength({ min: 1 }).withMessage('Title is required'),
-  body('targetValue').isNumeric().isFloat({ min: 0 }).withMessage('Target value must be a positive number'),
-  body('currentValue').optional().isNumeric().isFloat({ min: 0 }).withMessage('Current value must be a positive number'),
-  body('category').optional().isIn(['personal', 'work', 'health', 'learning', 'financial', 'other']).withMessage('Invalid category'),
-  body('priority').optional().isIn(['low', 'medium', 'high']).withMessage('Invalid priority'),
-  body('status').optional().isIn(['active', 'completed', 'paused', 'cancelled']).withMessage('Invalid status'),
-  body('startDate').isISO8601().withMessage('Valid start date is required'),
-  body('targetDate').isISO8601().withMessage('Valid target date is required')
-];
 
 // @route   GET /api/goals
 // @desc    Get all goals with optional filters

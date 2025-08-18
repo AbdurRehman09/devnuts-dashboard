@@ -6,12 +6,48 @@ import { useTasks } from '@/hooks/useTasks';
 import { Plus, Search, Filter, MoreVertical, Calendar, User, AlertCircle } from 'lucide-react';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Header from '@/components/dashboard/Header';
+import TaskModal from '@/components/dashboard/modals/TaskModal';
 
 const TasksPage = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const { tasks, loading, error, createTask, updateTask, deleteTask } = useTasks();
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+
+  const handleCreateTask = () => {
+    setSelectedTask(null);
+    setModalMode('create');
+    setShowTaskModal(true);
+  };
+
+  const handleEditTask = (task: any) => {
+    setSelectedTask(task);
+    setModalMode('edit');
+    setShowTaskModal(true);
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask(taskId);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleSaveTask = async (taskData: any) => {
+    try {
+      if (modalMode === 'create') {
+        await createTask(taskData);
+      } else if (selectedTask) {
+        await updateTask(selectedTask._id, taskData);
+      }
+    } catch (error) {
+      console.error('Error saving task:', error);
+    }
+  };
 
   const filteredTasks = tasks.filter(task => {
     const matchesFilter = filter === 'all' || task.status === filter;
@@ -104,7 +140,10 @@ const TasksPage = () => {
                 </select>
 
                 {/* Add Task Button */}
-                <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                <button 
+                  onClick={handleCreateTask}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                >
                   <Plus className="w-4 h-4" />
                   Add Task
                 </button>
@@ -136,9 +175,27 @@ const TasksPage = () => {
                           <h3 className="font-semibold text-foreground mb-1">{task.title}</h3>
                           <p className="text-sm text-muted-foreground line-clamp-2">{task.description}</p>
                         </div>
-                        <button className="p-1 hover:bg-accent rounded">
-                          <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditTask(task);
+                            }}
+                            className="text-xs text-blue-500 hover:underline"
+                          >
+                            Edit
+                          </button>
+                          <span className="text-xs text-muted-foreground">|</span>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTask(task._id);
+                            }}
+                            className="text-xs text-red-500 hover:underline"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
 
                       {/* Progress Bar */}
@@ -197,6 +254,16 @@ const TasksPage = () => {
           </main>
         </div>
       </div>
+
+      {/* Task Modal */}
+      <TaskModal
+        isOpen={showTaskModal}
+        onClose={() => setShowTaskModal(false)}
+        task={selectedTask}
+        onSave={handleSaveTask}
+        onDelete={handleDeleteTask}
+        mode={modalMode}
+      />
     </div>
   );
 };

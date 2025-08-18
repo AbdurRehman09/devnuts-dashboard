@@ -28,7 +28,8 @@ const projectSchema = new mongoose.Schema({
   },
   startDate: {
     type: Date,
-    required: true
+    required: false,
+    default: Date.now
   },
   endDate: {
     type: Date
@@ -46,24 +47,13 @@ const projectSchema = new mongoose.Schema({
       default: 0
     }
   },
-  teamMembers: [{
-    name: String,
-    role: String,
-    email: String,
-    joinedDate: {
-      type: Date,
-      default: Date.now
-    }
-  }],
+  teamMembers: [String], // Simple string array instead of embedded documents
   projectManager: {
     type: String,
-    required: true
+    required: false,
+    default: 'Unassigned'
   },
-  client: {
-    name: String,
-    email: String,
-    company: String
-  },
+  client: String, // Simple string instead of embedded document
   milestones: [{
     title: String,
     description: String,

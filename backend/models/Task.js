@@ -22,11 +22,13 @@ const taskSchema = new mongoose.Schema({
   },
   assignedBy: {
     type: String,
-    required: true
+    required: false,
+    default: 'Unassigned'
   },
   assignedTo: {
     type: String,
-    required: true
+    required: false,
+    default: 'Unassigned'
   },
   progress: {
     type: Number,

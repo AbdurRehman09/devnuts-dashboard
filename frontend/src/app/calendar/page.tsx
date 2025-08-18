@@ -6,11 +6,15 @@ import { useMeetings } from '@/hooks/useMeetings';
 import { Plus, Search, Calendar as CalendarIcon, Clock, Users, Video } from 'lucide-react';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Header from '@/components/dashboard/Header';
+import MeetingModal from '@/components/dashboard/modals/MeetingModal';
 
 const CalendarPage = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const { meetings, loading, error, createMeeting, updateMeeting, deleteMeeting } = useMeetings();
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
+  const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
 
   const filteredMeetings = meetings.filter(meeting =>
     meeting.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -35,22 +39,36 @@ const CalendarPage = () => {
   };
 
   const handleCreateMeeting = () => {
-    const newMeeting = {
-      title: 'New Meeting',
-      description: 'Meeting description',
-      meetingDate: new Date().toISOString().split('T')[0],
-      startTime: '09:00',
-      endTime: '10:00',
-      duration: 60,
-      organizer: 'You',
-      meetingType: 'video-call',
-      status: 'scheduled',
-      participants: []
-    };
-    
-    createMeeting(newMeeting).then(() => {
-      console.log('Meeting created');
-    }).catch(console.error);
+    setSelectedMeeting(null);
+    setModalMode('create');
+    setShowMeetingModal(true);
+  };
+
+  const handleEditMeeting = (meeting: any) => {
+    setSelectedMeeting(meeting);
+    setModalMode('edit');
+    setShowMeetingModal(true);
+  };
+
+  const handleDeleteMeeting = async (meetingId: string) => {
+    try {
+      await deleteMeeting(meetingId);
+    } catch (error) {
+      console.error('Error deleting meeting:', error);
+    }
+  };
+
+  const handleSaveMeeting = async (meetingData: any) => {
+    try {
+      if (modalMode === 'create') {
+        await createMeeting(meetingData);
+      } else if (selectedMeeting) {
+        await updateMeeting(selectedMeeting._id, meetingData);
+      }
+      setShowMeetingModal(false);
+    } catch (error) {
+      console.error('Error saving meeting:', error);
+    }
   };
 
   return (
@@ -172,14 +190,20 @@ const CalendarPage = () => {
                           </div>
 
                           <div className="flex items-center gap-2 pt-2 border-t border-border">
-                            <button className="text-xs text-blue-500 hover:underline">
+                            <button
+                              onClick={() => handleEditMeeting(meeting)}
+                              className="text-xs text-blue-500 hover:underline"
+                            >
                               Edit
                             </button>
                             <button className="text-xs text-green-500 hover:underline">
                               Join
                             </button>
-                            <button className="text-xs text-red-500 hover:underline">
-                              Cancel
+                            <button
+                              onClick={() => handleDeleteMeeting(meeting._id)}
+                              className="text-xs text-red-500 hover:underline"
+                            >
+                              Delete
                             </button>
                           </div>
                         </div>
@@ -200,6 +224,16 @@ const CalendarPage = () => {
           </main>
         </div>
       </div>
+
+      {/* Meeting Modal */}
+      <MeetingModal
+        isOpen={showMeetingModal}
+        onClose={() => setShowMeetingModal(false)}
+        meeting={selectedMeeting}
+        onSave={handleSaveMeeting}
+        onDelete={handleDeleteMeeting}
+        mode={modalMode}
+      />
     </div>
   );
 };

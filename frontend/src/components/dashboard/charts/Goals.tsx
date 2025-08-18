@@ -1,12 +1,52 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Target, TrendingUp, Plus } from 'lucide-react';
 import { useGoals } from '@/hooks/useGoals';
+import GoalModal from '../modals/GoalModal';
 
 const Goals = () => {
-  const { goals, loading, error } = useGoals({ limit: 6, status: 'active' });
+  const { goals, loading, error, createGoal, updateGoal, deleteGoal } = useGoals({ limit: 6, status: 'active' });
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+
+  const handleCreateGoal = () => {
+    setSelectedGoal(null);
+    setModalMode('create');
+    setShowGoalModal(true);
+  };
+
+  const handleEditGoal = (goal: any) => {
+    setSelectedGoal(goal);
+    setModalMode('edit');
+    setShowGoalModal(true);
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    try {
+      await deleteGoal(goalId);
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+    }
+  };
+
+  const handleSaveGoal = async (goalData: any) => {
+    try {
+      console.log('Dashboard: Saving goal with data:', goalData);
+      if (modalMode === 'create') {
+        await createGoal(goalData);
+        console.log('Dashboard: Goal created successfully');
+      } else if (selectedGoal) {
+        await updateGoal(selectedGoal._id, goalData);
+        console.log('Dashboard: Goal updated successfully');
+      }
+      setShowGoalModal(false);
+    } catch (error) {
+      console.error('Dashboard: Error saving goal:', error);
+    }
+  };
 
   // Transform goals data for visualization
   const goalsData = goals.slice(0, 6).map((goal) => ({
@@ -61,9 +101,11 @@ const Goals = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-3 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
+            onClick={handleCreateGoal}
+            className="px-3 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-1"
           >
-            + Goal
+            <Plus className="w-4 h-4" />
+            Goal
           </motion.button>
           <div className="text-xs text-muted-foreground">November 2024</div>
         </div>
@@ -157,6 +199,16 @@ const Goals = () => {
           <span className="font-medium text-green-500">+12%</span>
         </div>
       </div>
+
+      {/* Goal Modal */}
+      <GoalModal
+        isOpen={showGoalModal}
+        onClose={() => setShowGoalModal(false)}
+        goal={selectedGoal}
+        onSave={handleSaveGoal}
+        onDelete={handleDeleteGoal}
+        mode={modalMode}
+      />
     </motion.div>
   );
 };

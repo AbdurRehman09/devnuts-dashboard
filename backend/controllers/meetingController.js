@@ -55,8 +55,12 @@ const getMeeting = async (req, res) => {
 // Create new meeting
 const createMeeting = async (req, res) => {
   try {
+    // Debug log
+    console.log('Creating meeting with data:', req.body);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Meeting validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 

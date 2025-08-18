@@ -12,19 +12,23 @@ const meetingSchema = new mongoose.Schema({
   },
   meetingDate: {
     type: Date,
-    required: true
+    required: false,
+    default: Date.now
   },
   startTime: {
     type: String,
-    required: true
+    required: false,
+    default: '09:00'
   },
   endTime: {
     type: String,
-    required: true
+    required: false,
+    default: '10:00'
   },
   duration: {
     type: Number, // in minutes
-    required: true
+    required: false,
+    default: 60 // Default 60 minutes
   },
   location: {
     type: String,
@@ -41,17 +45,10 @@ const meetingSchema = new mongoose.Schema({
   },
   organizer: {
     type: String,
-    required: true
+    required: false,
+    default: 'Current User'
   },
-  participants: [{
-    name: String,
-    email: String,
-    status: {
-      type: String,
-      enum: ['pending', 'accepted', 'declined', 'maybe'],
-      default: 'pending'
-    }
-  }],
+  participants: [String], // Simple string array instead of embedded documents
   agenda: {
     type: String,
     trim: true

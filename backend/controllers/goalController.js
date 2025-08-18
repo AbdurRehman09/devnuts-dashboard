@@ -48,8 +48,12 @@ const getGoal = async (req, res) => {
 // Create new goal
 const createGoal = async (req, res) => {
   try {
+    // Debug log
+    console.log('Creating goal with data:', req.body);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Goal validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 

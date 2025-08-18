@@ -6,13 +6,16 @@ import { useReminders } from '@/hooks/useReminders';
 import { Plus, Search, Filter, Bell, Calendar, User, Clock } from 'lucide-react';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Header from '@/components/dashboard/Header';
+import ReminderModal from '@/components/dashboard/modals/ReminderModal';
 
 const RemindersPage = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const { reminders, loading, error, createReminder, updateReminder, deleteReminder } = useReminders();
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [selectedReminder, setSelectedReminder] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
 
   const filteredReminders = reminders.filter(reminder => {
     const matchesFilter = filter === 'all' || reminder.status === filter;
@@ -39,20 +42,35 @@ const RemindersPage = () => {
   };
 
   const handleCreateReminder = () => {
-    // Simple reminder creation for now
-    const newReminder = {
-      title: 'New Reminder',
-      description: 'Reminder description',
-      reminderDate: new Date().toISOString().split('T')[0],
-      reminderTime: '09:00',
-      status: 'pending',
-      priority: 'medium',
-      category: 'work'
-    };
-    
-    createReminder(newReminder).then(() => {
-      setShowCreateModal(false);
-    }).catch(console.error);
+    setSelectedReminder(null);
+    setModalMode('create');
+    setShowReminderModal(true);
+  };
+
+  const handleEditReminder = (reminder: any) => {
+    setSelectedReminder(reminder);
+    setModalMode('edit');
+    setShowReminderModal(true);
+  };
+
+  const handleDeleteReminder = async (reminderId: string) => {
+    try {
+      await deleteReminder(reminderId);
+    } catch (error) {
+      console.error('Error deleting reminder:', error);
+    }
+  };
+
+  const handleSaveReminder = async (reminderData: any) => {
+    try {
+      if (modalMode === 'create') {
+        await createReminder(reminderData);
+      } else if (selectedReminder) {
+        await updateReminder(selectedReminder._id, reminderData);
+      }
+    } catch (error) {
+      console.error('Error saving reminder:', error);
+    }
   };
 
   return (
@@ -181,10 +199,16 @@ const RemindersPage = () => {
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          <button className="text-xs text-blue-500 hover:underline">
+                          <button 
+                            onClick={() => handleEditReminder(reminder)}
+                            className="text-xs text-blue-500 hover:underline"
+                          >
                             Edit
                           </button>
-                          <button className="text-xs text-red-500 hover:underline">
+                          <button 
+                            onClick={() => handleDeleteReminder(reminder._id)}
+                            className="text-xs text-red-500 hover:underline"
+                          >
                             Delete
                           </button>
                         </div>
@@ -205,6 +229,16 @@ const RemindersPage = () => {
           </main>
         </div>
       </div>
+
+      {/* Reminder Modal */}
+      <ReminderModal
+        isOpen={showReminderModal}
+        onClose={() => setShowReminderModal(false)}
+        reminder={selectedReminder}
+        onSave={handleSaveReminder}
+        onDelete={handleDeleteReminder}
+        mode={modalMode}
+      />
     </div>
   );
 };
